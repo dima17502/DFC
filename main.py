@@ -33,7 +33,7 @@ def get_func():
         anf = vector_to_anf(vector)
         
     elif user_input == "3":
-        print("Введите запись булевой функции (x1,x2,...xn) в виде полинома Жегалкина. Например: 1+x1x2+x1x2x3 - запись для f(x1,x2,x3), '+' соответсвует операции XOR, знак умножения пропускается")
+        print("Введите коэффициенты для АНФ. Например, 11000000 - для f(x1,x2,x3) = 1 + x3, 0001 для f(x1,x2) = x1x2")
         anf = input()
         vector = anf_to_vector(anf)
         walsh_coefs = vector_to_walsh(vector)
