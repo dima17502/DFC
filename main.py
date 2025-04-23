@@ -1,10 +1,12 @@
-import re
-from copy import copy, deepcopy
+'''
+    Discrete functions in Cryptography
+    Student: Dimetriy Volkov
+    Group: b21-502
+'''
 
-'''
-   Made by: Dimetriy Volkov
-   Group: B21-502
-'''
+from copy import copy, deepcopy
+import math 
+
 func_list = []
 vector = ""
 anf = ""
@@ -27,10 +29,8 @@ def get_func():
     elif user_input == "2":
         print("Введите вектор коэффициентов Уолша-Адамара:")
         walsh_coefs = list(map(int, input().split()))
-        vector = walsh_to_vector(walsh_coefs) 
-        #print(vector)
+        vector = ''.join(map(str, walsh_to_vector(walsh_coefs)))
         anf = vector_to_anf(vector)
-        #print(anf)
         
     elif user_input == "3":
         print("Введите запись булевой функции (x1,x2,...xn) в виде полинома Жегалкина. Например: 1+x1x2+x1x2x3 - запись для f(x1,x2,x3), '+' соответсвует операции XOR, знак умножения пропускается")
@@ -140,31 +140,91 @@ def count_properties(vector):
     w = 0
     for c in vector:
         w += int(c)
-    properties["вес"] = w
-    if w == len(vector) // 2:
-        properties["is_balanced"] = True 
-    else:
-        properties["is_balanced"] = False 
+    properties["вес Хемминга"] = w
+    properties['Сбалансированная'] = "Да" if (w == len(vector) // 2) else "Нет"
+	
 
     degree = 0 
     anf  = vector_to_anf(vector)
     #print(anf)
-    for i in range(len(anf)):
-        if anf[i] == "1":
-            units = n_to_binary(i).count('1')
-            if units > degree:
-                degree = units
-    properties['degree'] = degree
-    properties['is_affin'] = (degree == 1)
+  
+    degree = int(math.log(anf[0].rfind('1')+1,2))
+    
+    properties['Степень функции'] = degree
+    properties['Афинная'] = "Да" if (degree == 1) else "Нет"
     wa_coefs = vector_to_walsh(vector)
     max_v = 0
     for value in wa_coefs:
         if abs(value) > max_v:
             max_v = abs(value)
-    properties['walsh_adamar_coefficients'] = wa_coefs
-    properties['anf'] = (vector_to_anf(vector))
-    properties['nonlinearity'] = len(vector)//2 - max_v // 2
+    properties['Коэффициенты Уолша-Адамара'] = wa_coefs
+    properties['Коэффициенты АНФ'] = (vector_to_anf(vector))
+    properties['Нелинейность'] = len(vector)//2 - max_v // 2
+    dim = int(math.log(len(vector),2))
+    properties['Размерность'] = dim
+    properties['Количество аннуляторов'] = 2**(len(vector)- w)
+    auto_coefs = []
+    for i in range(len(vector)):
+        binv = n_to_binary(i)
+        auto_coefs.append(count_mutual_correlation(vector, vector, '0'*(dim-len(binv))+ binv) )
+    properties['Коэффициенты автокорреляции'] = auto_coefs
+    properties['Алгебраическая иммунность'] = count_ai(vector)
     return properties 
+
+def count_ai(vector):
+    if vector.find('0') == -1 or vector.find('1') == -1:
+        return [0, 0]
+    annulator = ''
+    v_size = len(vector)
+    min_deg = v_size
+    f_xor1 = [int(i)^1 for i in vector]
+    vector = list(map(int, vector))
+    zero_indexes = []
+
+    for i in range(len(vector)):
+        if vector[i] == 0:
+            zero_indexes.append(i)
+        else:
+            vector[i] = 0
+    zeros = len(zero_indexes)
+    for i in range(1, 2**(zeros)):
+        t = n_to_binary(i)
+        t = '0'*(zeros - len(t)) + t 
+        for j in range(len(t)):
+            if t[j] == '0':
+                vector[zero_indexes[j]] = 0
+            else:
+                vector[zero_indexes[j]] = 1
+        anf  = vector_to_anf(vector)
+
+        degree = int(math.log(anf[0].rfind('1')+1,2))
+        
+        if degree < min_deg and degree > 0:
+            min_deg = degree 
+            annulator = anf[1]
+    zero_indexes = []
+    for i in range(len(f_xor1)):
+        if f_xor1[i] == 0:
+            zero_indexes.append(i)
+        else:
+            f_xor1[i] = 0
+    zeros = len(zero_indexes)
+    for i in range(1, 2**(zeros)):
+        g = ''
+        t = n_to_binary(i)
+        t = '0'*(zeros - len(t)) + t 
+        for j in range(len(t)):
+            if t[j] == '0':
+                f_xor1[zero_indexes[j]] = 0
+            else:
+                f_xor1[zero_indexes[j]] = 1
+        anf  = vector_to_anf(f_xor1)
+
+        degree = int(math.log(anf[0].rfind('1')+1,2))
+        if degree < min_deg and degree>0:
+            min_deg = degree 
+            annulator = anf[1]
+    return [min_deg, annulator]
 
 def hamming_distance(v1, v2):
     # Сложность O(2^(2n))
