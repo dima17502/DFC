@@ -2,7 +2,8 @@ import re
 from copy import copy, deepcopy
 
 '''
-   
+   Made by: Dimetriy Volkov
+   Group: B21-502
 '''
 func_list = []
 vector = ""
