@@ -27,9 +27,9 @@ def get_func():
         print("Введите вектор коэффициентов Уолша-Адамара:")
         walsh_coefs = list(map(int, input().split()))
         vector = walsh_to_vector(walsh_coefs) 
-        print(vector)
+        #print(vector)
         anf = vector_to_anf(vector)
-        print(anf)
+        #print(anf)
         
     elif user_input == "3":
         print("Введите запись булевой функции (x1,x2,...xn) в виде полинома Жегалкина. Например: 1+x1x2+x1x2x3 - запись для f(x1,x2,x3), '+' соответсвует операции XOR, знак умножения пропускается")
@@ -155,8 +155,15 @@ def count_properties(vector):
                 degree = units
     properties['degree'] = degree
     properties['is_affin'] = (degree == 1)
-
-    return properties
+    wa_coefs = vector_to_walsh(vector)
+    max_v = 0
+    for value in wa_coefs:
+        if abs(value) > max_v:
+            max_v = abs(value)
+    properties['walsh_adamar_coefficients'] = wa_coefs
+    properties['anf'] = (vector_to_anf(vector))
+    properties['nonlinearity'] = len(vector)//2 - max_v // 2
+    return properties 
 
 def hamming_distance(v1, v2):
     # Сложность O(2^(2n))
@@ -184,7 +191,7 @@ def n_m_mapping():
     m = int(input())
     for i in range(m):
         func_list.append(get_func())
-    print(func_list)
+    #print(func_list)
     res = []
     for i in range(len(func_list[0])):
         res.append([])
@@ -221,8 +228,7 @@ def vector_to_anf(vector):
                     s += ("x" + str(ind+1))
             s += '⊕ '
     s = s[:-2]
-    print(s)
-    return res 
+    return [res , s]
 
 def is_deg_of_two(n):
     # Сложность: log2_n
@@ -254,13 +260,14 @@ def n_to_binary(n):
         return res 
 
 def main():
+  
     v = get_func()
-    print(vector_to_anf(v))
+    #print(vector_to_anf(v))
     #anf_to_vector(v)
     #print(get_adamar_matrix(4))
     #w = vector_to_walsh(v)
     #print(walsh_to_vector(w))
-    #print(count_properties(v))
+    print(count_properties(v))
     #print(n_m_mapping())
     #print(bin_to_n('111'))
     #print(vector_to_anf(v))
